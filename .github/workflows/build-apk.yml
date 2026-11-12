@@ -23,36 +23,55 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: 4. Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: 5. Scaffold Capacitor Android Project
+      - name: 4. Scaffold Project & Capacitor
         run: |
           mkdir -p www
-          cp index.html manifest.json sw.js privacy-policy.html www/
+          cp index.html www/ || true
+          cp manifest.json www/ || true
+          cp sw.js www/ || true
+          cp privacy-policy.html www/ || true
           npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
           npx cap init "HydroPulse Max" "com.hydropulse.max.cleaner" --web-dir www
           npx cap add android
 
-      - name: 6. Inject Permissions & AdMob App ID
+      - name: 5. Inject Permissions and AdMob ID via Python
         run: |
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
-          # إضافة الأذونات المطلوبة للمايكروفون والاهتزاز والإنترنت
-          sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />' $MANIFEST
-          # إضافة كود تطبيق أدموب المالي
-          sed -i '/<\/application>/i \        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-5353448104363534~2186520413"/>' $MANIFEST
+          python3 -c "
+          path = 'android/app/src/main/AndroidManifest.xml'
+          with open(path, 'r', encoding='utf-8') as f:
+              data = f.read()
 
-      - name: 7. Sync Android Project
+          perms = '''
+              <uses-permission android:name=\"android.permission.INTERNET\" />
+              <uses-permission android:name=\"android.permission.RECORD_AUDIO\" />
+              <uses-permission android:name=\"android.permission.VIBRATE\" />
+              <uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\" />
+          '''
+          data = data.replace('</manifest>', perms + '\n</manifest>')
+
+          meta = '''
+                  <meta-data
+                      android:name=\"com.google.android.gms.ads.APPLICATION_ID\"
+                      android:value=\"ca-app-pub-5353448104363534~2186520413\"/>
+          '''
+          data = data.replace('</application>', meta + '\n    </application>')
+
+          with open(path, 'w', encoding='utf-8') as f:
+              f.write(data)
+          print('Successfully injected Android permissions and AdMob App ID!')
+          "
+
+      - name: 6. Sync Capacitor Android
         run: npx cap sync android
 
-      - name: 8. Compile Native Android APK
+      - name: 7. Compile Native Android APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: 9. Upload Ready APK Artifact
+      - name: 8. Upload Ready APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: HydroPulse-Max-Ready-APK
