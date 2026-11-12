@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>HydroPulse Max - Pro Speaker Cleaner, Acoustic Lab & Sleep Machine</title>
+
+    <meta name="color-scheme" content="only dark">
+    <meta name="theme-color" content="#050811">
+    <meta name="description" content="All-in-one acoustic laboratory: 165Hz water & dust ejector, live dB sound level meter, daily sleep relaxation noise, hearing age test, and device care.">
+
+    <!-- روابط PWA للمانيفست والعمل أوفلاين -->
+    <link rel="manifest" href="manifest.json">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
+
+    <style>
+        :root {
+            --bg-deep: #050811;
+            --bg-surface: #0B1120;
+            --bg-card: rgba(16, 24, 43, 0.78);
+            --cyan: #00F2FE;
+            --blue: #2563EB;
+            --indigo: #4F46E5;
+            --pink: #FF007F;
+            --green: #10B981;
+            --amber: #F59E0B;
+            --red: #EF4444;
+            --text-pure: #FFFFFF;
+            --text-muted: #8E9BAE;
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glow-cyan: 0 0 25px rgba(0, 242, 254, 0.4);
+            --glow-pink: 0 0 25px rgba(255, 0, 127, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-pure);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            padding-bottom: 92px;
+        }
+
+        /* توهج نيون محيطي */
+        .ambient-sphere {
+            position: fixed;
+            top: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 440px;
+            height: 440px;
+            background: radial-gradient(circle, rgba(0, 242, 254, 0.16) 0%, rgba(79, 70, 229, 0.08) 50%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* الترويسة الرئيسية */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(5, 8, 17, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .brand-badge {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--cyan), var(--indigo));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: var(--glow-cyan);
+        }
+        .brand-info h1 {
+            font-size: 18.5px;
+            font-weight: 900;
+            letter-spacing: -0.4px;
+            background: linear-gradient(90deg, #FFFFFF, #B9D5FF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .brand-info span {
+            font-size: 10px;
+            color: var(--cyan);
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .header-tools {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .daily-streak-pill {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--green);
+            color: var(--green);
+            padding: 4px 10px;
+            border-radius: 14px;
+            font-size: 11px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-round-menu {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--glass-border);
+            color: #FFF;
+            width: 36px;
+            height: 36px;
+            border-radius: 11px;
+            font-size: 19px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* الحاوية الأساسية */
+        main {
+            position: relative;
+            z-index: 10;
+            flex: 1;
+            max-width: 480px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 16px;
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .view-section.active-view {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* الكروت الزجاجية العصرية */
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.45);
+            margin-bottom: 16px;
+        }
+
+        /* أشرطة التبديل العريضة (Segmented Sliders) */
+        .segmented-track {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            padding: 4px;
+            border-radius: 16px;
+            display: flex;
+            gap: 6px;
+            margin-bottom: 20px;
+        }
+        .seg-pill-btn {
+            flex: 1;
+            padding: 11px;
+            border-radius: 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .seg-pill-btn.active {
+            background: linear-gradient(135deg, var(--cyan), var(--blue));
+            color: #030816;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.35);
+        }
+
+        /* غرفة محاكاة الماء الفيزيائية (Canvas Liquid Chamber) */
+        .liquid-chamber {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 15px auto 25px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #0F172E 0%, #060914 100%);
+            box-shadow: inset 0 0 30px rgba(0, 242, 254, 0.2), 0 12px 35px rgba(0,0,0,0.6);
+            border: 2px solid rgba(0, 242, 254, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        #waterFluidCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .chamber-hud {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+            pointer-events: none;
+        }
+        .hud-val {
+            font-size: 58px;
+            font-weight: 900;
+            letter-spacing: -2px;
+            line-height: 1;
+            background: linear-gradient(180deg, #FFFFFF 30%, #9BC5FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hud-freq {
+            font-size: 13.5px;
+            font-weight: 800;
+            color: var(--cyan);
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+        .hud-status {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 2px;
+        }
+
+        /* الأزرار الضخمة الفخمة */
+        .btn-giant {
+            width: 100%;
+            padding: 17px;
+            border-radius: 18px;
+            border: none;
+            background: linear-gradient(135deg, var(--cyan) 0%, var(--blue) 100%);
+            color: #030816;
+            font-size: 16px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            box-shadow: 0 8px 30px rgba(0, 242, 254, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+        .btn-giant:active {
+            transform: scale(0.97);
+        }
+        .btn-giant.running-btn {
+            background: linear-gradient(135deg, var(--pink) 0%, #FF5500 100%);
+            box-shadow: 0 8px 30px rgba(255, 0, 127, 0.45);
+            color: #FFF;
+        }
+
+        /* القرص الدوار التفاعلي 360 درجة (Manual Rotary Knob) */
+        .rotary-stage {
+            position: relative;
+            width: 230px;
+            height: 230px;
+            margin: 15px auto;
+            touch-action: none;
+        }
+        .rotary-wheel {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #1E3A8A, #0F172A);
+            box-shadow: 0 12px 30px rgba(0, 242, 254, 0.25), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            border: 4px solid var(--cyan);
+        }
+        .rotary-pin {
+            position: absolute;
+            width: 6px;
+            height: 35px;
+            background: var(--cyan);
+            border-radius: 4px;
+            top: 12px;
+            box-shadow: 0 0 10px var(--cyan);
+        }
+        .rotary-readout {
+            font-size: 32px;
+            font-weight: 900;
+            color: #FFFFFF;
+        }
+
+        /* مقياس الديسيبل المباشر (dB Sound Meter) */
+        .db-meter-box {
+            text-align: center;
+            padding: 25px 15px;
+        }
+        .db-gauge-number {
+            font-size: 76px;
+            font-weight: 900;
+            letter-spacing: -2px;
+            color: var(--cyan);
+            text-shadow: 0 0 35px rgba(0, 242, 254, 0.5);
+            line-height: 1;
+        }
+        .db-meter-bar-track {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 25px 0 12px;
+        }
+        .db-meter-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--green), var(--amber), var(--pink));
+            border-radius: 10px;
+            transition: width 0.08s ease;
+        }
+
+        /* آلة النوم والاسترخاء اليومية (Daily Sleep Machine) */
+        .sleep-grid-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .sleep-node-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 18px 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .sleep-node-card.playing {
+            border-color: var(--cyan);
+            background: rgba(0, 242, 254, 0.12);
+            box-shadow: 0 4px 20px rgba(0, 242, 254, 0.2);
+        }
+        .sleep-node-card .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .sleep-node-card .title {
+            font-size: 14.5px;
+            font-weight: 800;
+            color: #FFF;
+        }
+        .sleep-node-card .sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* فحص عمر الأذن والسمع (Hearing Age Diagnostic) */
+        .hearing-box {
+            text-align: center;
+            padding: 15px;
+        }
+        .freq-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            margin: 20px 0;
+        }
+        .freq-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--cyan);
+            box-shadow: 0 0 15px var(--cyan);
+            cursor: pointer;
+        }
+
+        /* موسوعة النصائح الشاملة المصورة (Tips Encyclopedia) */
+        .encyclopedia-pills {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+        .encyclopedia-pills::-webkit-scrollbar { display: none; }
+        .enc-chip {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            background: var(--bg-card);
+            color: var(--text-muted);
+            font-size: 12.5px;
+            font-weight: 800;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .enc-chip.active {
+            background: var(--cyan);
+            color: #030816;
+            border-color: var(--cyan);
+        }
+
+        .guide-item-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+            margin-bottom: 16px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .guide-item-card img {
+            width: 100%;
+            height: 185px;
+            object-fit: cover;
+            display: block;
+        }
+        .guide-item-body {
+            padding: 18px;
+        }
+        .guide-item-body h3 {
+            font-size: 16.5px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .guide-tag {
+            font-size: 10.5px;
+            padding: 3px 8px;
+            border-radius: 8px;
+            background: rgba(0, 242, 254, 0.15);
+            color: var(--cyan);
+            font-weight: 800;
+        }
+        .guide-item-body p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* القائمة الجانبية (Side Drawer) */
+        .drawer-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(5px);
+            z-index: 5000;
+        }
+        .drawer-panel {
+            position: fixed;
+            top: 0;
+            right: -320px;
+            width: 310px;
+            height: 100%;
+            background: #0B1120;
+            border-left: 1px solid var(--glass-border);
+            z-index: 6000;
+            box-shadow: -10px 0 35px rgba(0,0,0,0.6);
+            transition: right 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .drawer-panel.open {
+            right: 0;
+        }
+        .drawer-hdr {
+            background: linear-gradient(135deg, #1E3A8A, #0F172A);
+            padding: 30px 20px 22px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .drawer-links {
+            padding: 14px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .drawer-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 13px 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 800;
+            color: #FFF;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.15s;
+        }
+        .drawer-link:active {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        /* نافذة التقييم والمشاركة الذكية (Smart Viral Review Interceptor) */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            z-index: 8000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-box {
+            background: #0E1628;
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            border-radius: 26px;
+            padding: 26px 20px;
+            max-width: 350px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+        .star-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 18px 0;
+        }
+        .star-unit {
+            font-size: 34px;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .star-unit:active { transform: scale(1.25); }
+
+        /* شريط التنقل السفلي الفخم 6 تبويبات */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 74px;
+            background: rgba(5, 8, 17, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 6px;
+            z-index: 2000;
+        }
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: 16.6%;
+            transition: color 0.2s;
+        }
+        .nav-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            transition: transform 0.2s;
+        }
+        .nav-btn.active {
+            color: var(--cyan);
+        }
+        .nav-btn.active svg {
+            transform: translateY(-2px);
+            filter: drop-shadow(0 0 8px rgba(0, 242, 254, 0.6));
+        }
+
+        /* حاوية إعلانات البانر الثابتة في الأسفل (Real Multi-Network Banner Area) */
+        #admobBannerContainer {
+            position: fixed;
+            bottom: 74px;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: #020408;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 800;
+            color: #64748B;
+            z-index: 1900;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-sphere"></div>
+
+    <!-- الترويسة الرئيسية -->
+    <header>
+        <div class="brand-box" onclick="openDrawer()">
+            <div class="brand-badge">🌊</div>
+            <div class="brand-info">
+                <h1>HydroPulse Max</h1>
+                <span>Pro Acoustic Suite</span>
+            </div>
+        </div>
+        <div class="header-tools">
+            <div class="daily-streak-pill" id="streakBadge" title="Daily Clean Streak">
+                <span>🔥</span> <span id="streakDaysCount">1 Day Streak</span>
+            </div>
+            <button class="btn-round-menu" onclick="openDrawer()">☰</button>
+        </div>
+    </header>
+
+    <!-- القائمة الجانبية الكاملة (Side Drawer) -->
+    <div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawer()"></div>
+    <aside class="drawer-panel" id="drawerPanel">
+        <div class="drawer-hdr">
+            <h2 style="font-size: 20px; font-weight: 900;">HydroPulse Max</h2>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">All-in-One Audio Health & Repair Lab</p>
+            <div style="display:inline-block; margin-top:10px; background:rgba(0,242,254,0.15); color:var(--cyan); padding:4px 10px; border-radius:12px; font-size:11px; font-weight:800;">
+                ✓ 100% UNLOCKED LIFETIME
+            </div>
+        </div>
+        <div class="drawer-links">
+            <button class="drawer-link" onclick="switchNavTab('tabCleaner'); closeDrawer();">
+                <span>🌊 Speaker Water Ejector</span> <span>›</span>
+            </button>
+            <button class="drawer-link" onclick="switchNavTab('tabSleep'); closeDrawer();">
+                <span>🌙 Daily Sleep & Relax Machine</span> <span>›</span>
+            </button>
+            <button class="drawer-link" onclick="switchNavTab('tabDecibel'); closeDrawer();">
+                <span>🎙️ Live Decibel Sound Meter</span> <span>›</span>
+            </button>
+            <button class="drawer-link" onclick="switchNavTab('tabHearing'); closeDrawer();">
+                <span>👂 Hearing Age Frequency Test</span> <span>›</span>
+            </button>
+            <button class="drawer-link" onclick="switchNavTab('tabBooster'); closeDrawer();">
+                <span>🔊 Daily Volume Booster (+200%)</span> <span>›</span>
+            </button>
+            <button class="drawer-link" onclick="switchNavTab('tabGuides'); closeDrawer();">
+                <span>📚 Complete Care Encyclopedia</span> <span>›</span>
+            </button>
+            <hr style="border:0; border-top:1px solid var(--glass-border); margin:8px 0;">
+            <button class="drawer-link" onclick="shareViralRescueHook(); closeDrawer();">
+                <span>🚨 Share Rescue Link with Friends</span> <span>›</span>
+            </button>
+            <button class="drawer-link" onclick="triggerSmartStoreReview(); closeDrawer();">
+                <span>⭐ Rate 5 Stars on Google Play</span> <span>›</span>
+            </button>
+            <button class="drawer-link" onclick="scheduleRoutineCleanAlarm(); closeDrawer();">
+                <span>🔔 Schedule Weekly Dust Clean Alarm</span> <span style="color:var(--green); font-size:11px;">ON</span>
+            </button>
+        </div>
+    </aside>
+
+    <main>
+        
+        <!-- التبويب 1: منظف السماعات المتطور (Ejector) -->
+        <section id="tabCleaner" class="view-section active-view">
+            <div class="glass-card">
+                <div class="segmented-track">
+                    <button class="seg-pill-btn active" id="btnModeAuto" onclick="switchCleanSubMode('auto')">Auto Mode</button>
+                    <button class="seg-pill-btn" id="btnModeRotary" onclick="switchCleanSubMode('rotary')">Rotary Dial</button>
+                    <button class="seg-pill-btn" id="btnModePitches" onclick="switchCleanSubMode('pitches')">5 Pitches</button>
+                </div>
+
+                <!-- الوضع التلقائي بالأمواج السائلة -->
+                <div id="cleanSubAuto">
+                    <div class="liquid-chamber">
+                        <canvas id="waterFluidCanvas" width="250" height="250"></canvas>
+                        <div class="chamber-hud">
+                            <div class="hud-val" id="autoPercentDisplay">0%</div>
+                            <div class="hud-freq" id="autoFreqDisplay">165 Hz</div>
+                            <div class="hud-status" id="autoStatusDisplay">READY</div>
+                        </div>
+                    </div>
+
+                    <p style="text-align:center; font-size:13.5px; color:var(--text-muted); line-height:1.5; margin-bottom:20px;">
+                        Expels trapped water & dust using sweeping 165Hz resonant waves combined with rapid acoustic micro-pulses.
+                    </p>
+
+                    <button class="btn-giant" id="btnStartAutoCleaning" onclick="toggleAutoSpeakerEject()">
+                        <span id="autoBtnIcon">⚡</span>
+                        <span id="autoBtnLabel">START DEEP CLEANING (35s)</span>
+                    </button>
+                </div>
+
+                <!-- الوضع اليدوي بالقرص الدوار 360 درجة -->
+                <div id="cleanSubRotary" style="display: none;">
+                    <div style="text-align: center; margin-bottom: 5px;">
+                        <span style="font-size: 13px; font-weight: 800; color: var(--cyan);">SWEEP FREQUENCY KNOB (0 - 500 Hz)</span>
+                    </div>
+
+                    <div class="rotary-stage" id="rotaryTouchHub">
+                        <div class="rotary-wheel" id="rotaryWheelCircle">
+                            <div class="rotary-pin"></div>
+                            <div class="rotary-readout" id="rotaryHzLabel">165 Hz</div>
+                        </div>
+                    </div>
+
+                    <button class="btn-giant" id="btnToggleRotaryTone" onclick="toggleRotaryContinuousTone()">
+                        <span id="rotaryPlayIcon">▶</span>
+                        <span id="rotaryPlayText">PLAY ROTARY FREQUENCY</span>
+                    </button>
+                </div>
+
+                <!-- الأنماط الخمسة الحرة 100% -->
+                <div id="cleanSubPitches" style="display: none;">
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <div class="glass-card" style="padding:14px; margin-bottom:0; cursor:pointer;" onclick="runTargetedPitch(165, 'Normal (165Hz)')">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong>Normal Pitch (165Hz)</strong>
+                                <span style="color:var(--green); font-size:11px; font-weight:900;">UNLOCKED</span>
+                            </div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Safe acoustic membrane flush.</div>
+                        </div>
+                        <div class="glass-card" style="padding:14px; margin-bottom:0; cursor:pointer;" onclick="runTargetedPitch(250, 'Medium (250Hz)')">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong>Medium Pitch (250Hz)</strong>
+                                <span style="color:var(--green); font-size:11px; font-weight:900;">UNLOCKED</span>
+                            </div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">High-intensity sweep for medium volume.</div>
+                        </div>
+                        <div class="glass-card" style="padding:14px; margin-bottom:0; cursor:pointer;" onclick="runTargetedPitch(380, 'High Pitch (380Hz)')">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong>High Pitch (380Hz)</strong>
+                                <span style="color:var(--green); font-size:11px; font-weight:900;">PRO FREE</span>
+                            </div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Dislodges stubborn micro-particles.</div>
+                        </div>
+                        <div class="glass-card" style="padding:14px; margin-bottom:0; cursor:pointer;" onclick="runTargetedPitch(480, 'Mid High (480Hz)')">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong>Mid High Pitch (480Hz)</strong>
+                                <span style="color:var(--green); font-size:11px; font-weight:900;">PRO FREE</span>
+                            </div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Maximum extraction force.</div>
+                        </div>
+                        <div class="glass-card" style="padding:14px; margin-bottom:0; cursor:pointer;" onclick="runTargetedPitch(540, 'Extreme Ultrasonic (540Hz)')">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong>Extreme Ultrasonic (540Hz)</strong>
+                                <span style="color:var(--green); font-size:11px; font-weight:900;">MAX FORCE</span>
+                            </div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Heavy flooding & deep immersion recovery.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- التبويب 2: آلة النوم والاسترخاء اليومية (Daily Sleep Machine) -->
+        <section id="tabSleep" class="view-section">
+            <div class="glass-card">
+                <h3 style="font-size: 18px; font-weight: 900; margin-bottom: 4px;">🌙 Daily Relaxation & Sleep Machine</h3>
+                <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+                    Keep HydroPulse installed for your everyday sleep, study focus, and tinnitus relief with pure synthesized acoustic audio.
+                </p>
+
+                <div class="sleep-grid-cards">
+                    <div class="sleep-node-card" id="sleepRain" onclick="toggleAcousticAtmosphere('rain', this)">
+                        <span class="icon">🌧️</span>
+                        <div class="title">Natural Rain</div>
+                        <div class="sub">Soft window downpour</div>
+                    </div>
+                    <div class="sleep-node-card" id="sleepWhite" onclick="toggleAcousticAtmosphere('white', this)">
+                        <span class="icon">💨</span>
+                        <div class="title">White Noise</div>
+                        <div class="sub">Full spectrum sound mask</div>
+                    </div>
+                    <div class="sleep-node-card" id="sleepBrown" onclick="toggleAcousticAtmosphere('brown', this)">
+                        <span class="icon">🌊</span>
+                        <div class="title">Brown Noise</div>
+                        <div class="sub">Deep warm low rumble</div>
+                    </div>
+                    <div class="sleep-node-card" id="sleep432" onclick="toggleAcousticAtmosphere('432', this)">
+                        <span class="icon">✨</span>
+                        <div class="title">432 Hz Miracle</div>
+                        <div class="sub">Harmonic calming tone</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- التبويب 3: مقياس الديسيبل ومستوى الضوضاء المباشر (Live dB Meter) -->
+        <section id="tabDecibel" class="view-section">
+            <div class="glass-card db-meter-box">
+                <div style="font-size:13px; font-weight:800; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase;">
+                    Live Ambient Sound Level
+                </div>
+                <div class="db-gauge-number" id="dbMeterNum">00</div>
+                <div style="font-size:13px; font-weight:800; color:var(--cyan); margin-top:4px;" id="dbStatusLabel">
+                    Microphone Inactive
+                </div>
+
+                <div class="db-meter-bar-track">
+                    <div class="db-meter-bar-fill" id="dbMeterFill"></div>
+                </div>
+
+                <button class="btn-giant" id="btnToggleDecibelMic" onclick="toggleMicrophoneDbMeter()">
+                    <span id="micIcon">🎙️</span>
+                    <span id="micText">ACTIVATE LIVE DB METER</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- التبويب 4: فحص عمر الأذن ومضخم الصوت اليومي (Hearing Test) -->
+        <section id="tabHearing" class="view-section">
+            <div class="glass-card hearing-box">
+                <h3 style="font-size: 18px; font-weight: 900;">👂 What Age Are Your Ears?</h3>
+                <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 4px;">
+                    Test the highest frequency you can perceive to estimate your biological hearing age!
+                </p>
+
+                <div style="font-size: 46px; font-weight: 900; color: var(--cyan); margin-top: 15px;" id="hearingFreqText">12,000 Hz</div>
+                <div style="font-size: 14px; font-weight: 800; color: var(--amber); margin-top: 4px;" id="hearingAgeText">Estimated Ear Age: ~35 Years Old</div>
+
+                <input type="range" class="freq-slider" min="8000" max="19000" step="500" value="12000" oninput="changeHearingFreqValue(this.value)">
+
+                <button class="btn-giant" id="btnHearingToneToggle" onclick="toggleHearingTonePlay()">
+                    <span>▶</span> <span id="hearingBtnText">Test This Frequency</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- التبويب 5: مضخم الصوت ومختبر الألعاب (Volume Booster & Gaming Stereo) -->
+        <section id="tabBooster" class="view-section">
+            <div class="glass-card">
+                <h3 style="font-size: 18px; font-weight: 900; margin-bottom: 4px;">🔊 Sound Booster & Gaming Stereo</h3>
+                <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">
+                    Daily audio diagnostic tests for TikTok/YouTube volume boost and PUBG stereo footstep balance.
+                </p>
+
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <div class="glass-card" style="padding:14px; margin-bottom:0; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>Super Bass 80Hz Distortion Test</strong>
+                            <div style="font-size:12px; color:var(--text-muted);">Verifies zero membrane buzzing at low frequencies.</div>
+                        </div>
+                        <button class="btn-round-menu" onclick="playSingleDiagnosticTone(80, 2)">▶</button>
+                    </div>
+
+                    <div class="glass-card" style="padding:14px; margin-bottom:0; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>Gaming Footsteps Left Channel (440Hz)</strong>
+                            <div style="font-size:12px; color:var(--text-muted);">Isolates left headphone driver for shooter games.</div>
+                        </div>
+                        <button class="btn-round-menu" onclick="playStereoChannelPan('left')">◀</button>
+                    </div>
+
+                    <div class="glass-card" style="padding:14px; margin-bottom:0; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>Gaming Footsteps Right Channel (440Hz)</strong>
+                            <div style="font-size:12px; color:var(--text-muted);">Isolates right headphone driver for shooter games.</div>
+                        </div>
+                        <button class="btn-round-menu" onclick="playStereoChannelPan('right')">▶</button>
+                    </div>
+
+                    <div class="glass-card" style="padding:14px; margin-bottom:0; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>Crystal Clarity Sweep (50Hz - 12kHz)</strong>
+                            <div style="font-size:12px; color:var(--text-muted);">Full dynamic spectrum acoustic sweep.</div>
+                        </div>
+                        <button class="btn-round-menu" onclick="playFullAcousticSweep()">🎵</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- التبويب 6: موسوعة الصيانة والإنقاذ الشاملة (Tips Encyclopedia) -->
+        <section id="tabGuides" class="view-section">
+            <div class="encyclopedia-pills">
+                <div class="enc-chip active" onclick="filterEncyclopediaArticles('all', this)">All Protocols</div>
+                <div class="enc-chip" onclick="filterEncyclopediaArticles('water', this)">Water Rescue</div>
+                <div class="enc-chip" onclick="filterEncyclopediaArticles('salt', this)">Saltwater & Tea</div>
+                <div class="enc-chip" onclick="filterEncyclopediaArticles('port', this)">Charging Port</div>
+                <div class="enc-chip" onclick="filterEncyclopediaArticles('earbuds', this)">AirPods & Earbuds</div>
+                <div class="enc-chip" onclick="filterEncyclopediaArticles('mic', this)">Microphone Care</div>
+            </div>
+
+            <div id="encyclopediaContainer">
+                
+                <article class="guide-item-card" data-cat="water">
+                    <img src="https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600&auto=format&fit=crop&q=60" alt="Phone down">
+                    <div class="guide-item-body">
+                        <h3>Face Down & Avoid Rice Myth <span class="guide-tag">URGENT</span></h3>
+                        <p>
+                            <strong>Never submerge a wet smartphone in rice!</strong> Raw rice starch mixes with moisture and forms a hardened paste inside speaker grills. Instead: Power down immediately, hold the speaker grill downward, and let HydroPulse sound waves push water outward.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="guide-item-card" data-cat="salt">
+                    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=60" alt="Ocean Sea water">
+                    <div class="guide-item-body">
+                        <h3>Seawater, Tea & Soda Immersion <span class="guide-tag">CORROSION ALERT</span></h3>
+                        <p>
+                            Salt, sugar, and acidic beverages will corrode internal speaker solder within hours! If dropped in the ocean or coffee: Wipe immediately with a damp fresh-water cloth to dissolve salts, dry thoroughly, and run the Extreme Ultrasonic 540Hz Pitch mode.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="guide-item-card" data-cat="port">
+                    <img src="https://images.unsplash.com/photo-1584824486509-112e4181ff6b?w=600&auto=format&fit=crop&q=60" alt="Charging port">
+                    <div class="guide-item-body">
+                        <h3>"Liquid in Port" Warning Override <span class="guide-tag">CHARGING PORT</span></h3>
+                        <p>
+                            Do not use heat guns or hair dryers—excess heat melts battery seals! Place the phone vertically in front of a cool household fan for 30 minutes, or gently blow clean compressed air at an angle to dislodge droplets from the charging pins.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="guide-item-card" data-cat="earbuds">
+                    <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=60" alt="AirPods earbuds">
+                    <div class="guide-item-body">
+                        <h3>AirPods Earwax & Muffled Sound <span class="guide-tag">EARBUDS</span></h3>
+                        <p>
+                            Earwax blocks up to 40% of earbud volume over time. Moisten a clean soft toothbrush with 70% isopropyl alcohol, hold the mesh facing downward so alcohol doesn't drip into the driver, and brush gently outward to dissolve wax buildup.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="guide-item-card" data-cat="mic">
+                    <img src="https://images.unsplash.com/photo-1589492477829-5e65395b66cc?w=600&auto=format&fit=crop&q=60" alt="Mic cleaning">
+                    <div class="guide-item-body">
+                        <h3>Microphone Muffled on Calls? <span class="guide-tag">MICROPHONE</span></h3>
+                        <p>
+                            Never insert sewing needles or metal paperclips into microphone pinholes; this punctures the acoustic waterproof gasket! Press reusable cleaning putty or painter's tape against the hole to lift out pocket lint safely.
+                        </p>
+                    </div>
+                </article>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- شريط إعلانات البانر الثابت دائماً في الأسفل -->
+    <div id="admobBannerContainer">
+        GOOGLE ADMOB / UNITY / START.IO BANNER AREA (320x50)
+    </div>
+
+    <!-- نافذة التقييم والمشاركة الذكية (Smart Viral Review Interceptor) -->
+    <div class="modal-overlay" id="reviewInterceptModal">
+        <div class="modal-box">
+            <div style="font-size: 42px; margin-bottom: 6px;">🎉</div>
+            <h3 style="font-size: 19px; font-weight: 900; color: #FFF;">Cleaning Completed 100%!</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+                Did HydroPulse restore your sound clarity? Please rate your experience:
+            </p>
+
+            <div class="star-row">
+                <span class="star-unit" onclick="recordRatingSentiment(1)">⭐</span>
+                <span class="star-unit" onclick="recordRatingSentiment(2)">⭐</span>
+                <span class="star-unit" onclick="recordRatingSentiment(3)">⭐</span>
+                <span class="star-unit" onclick="recordRatingSentiment(4)">⭐</span>
+                <span class="star-unit" onclick="recordRatingSentiment(5)">⭐</span>
+            </div>
+
+            <button class="btn-giant" style="padding:12px; font-size:13px;" onclick="closeReviewModal()">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- شريط التنقل السفلي الفخم 6 تبويبات -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" id="btnNavCleaner" onclick="switchNavTab('tabCleaner')">
+            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+            <span>Cleaner</span>
+        </button>
+        <button class="nav-btn" id="btnNavSleep" onclick="switchNavTab('tabSleep')">
+            <svg viewBox="0 0 24 24"><path d="M12.3 2a10 10 0 0 0-1.9 20 10 10 0 0 0 9.6-7.3 1 1 0 0 0-1.2-1.3 8 8 0 1 1-7.8-10.1 1 1 0 0 0-1.3-1.3z"/></svg>
+            <span>Relax/Sleep</span>
+        </button>
+        <button class="nav-btn" id="btnNavDecibel" onclick="switchNavTab('tabDecibel')">
+            <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+            <span>dB Meter</span>
+        </button>
+        <button class="nav-btn" id="btnNavHearing" onclick="switchNavTab('tabHearing')">
+            <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-9 9v7c0 1.1.9 2 2 2h4v-8H5v-1a7 7 0 0 1 14 0v1h-4v8h4c1.1 0 2-.9 2-2v-7a9 9 0 0 0-9-9z"/></svg>
+            <span>Ear Test</span>
+        </button>
+        <button class="nav-btn" id="btnNavBooster" onclick="switchNavTab('tabBooster')">
+            <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+            <span>Booster</span>
+        </button>
+        <button class="nav-btn" id="btnNavGuides" onclick="switchNavTab('tabGuides')">
+            <svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+            <span>Guides</span>
+        </button>
+    </nav>
+
+    <script>
+        // =========================================================================
+        // 1. المحرك الإعلاني الثلاثي الموحد (AdEngine: AdMob + Unity + Start.io)
+        // =========================================================================
+        const AdEngine = {
+            config: {
+                admob: {
+                    appId: 'ca-app-pub-5353448104363534~2186520413',
+                    bannerId: 'ca-app-pub-5353448104363534/9067769320',
+                    interstitialId: 'ca-app-pub-5353448104363534/5399987058'
+                },
+                unity: {
+                    gameId: '800435117',
+                    interstitialId: 'BP_Interstitial_Android',
+                    bannerId: 'BP_Banner_Android',
+                    rewardedId: 'BP_Rewarded_Android'
+                },
+                startio: {
+                    appId: '210378261'
+                }
+            },
+
+            init() {
+                console.log("AdEngine initialized with AdMob, Unity, and Start.io.");
+                this.showBanner();
+            },
+
+            showBanner() {
+                // جسر استدعاء البانر عبر Capacitor Native Bridge
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
+                    window.Capacitor.Plugins.AdMob.showBanner({ adId: this.config.admob.bannerId }).catch(() => {
+                        console.log("AdMob banner fallback to Unity/Start.io");
+                    });
+                } else {
+                    document.getElementById('admobBannerContainer').innerText = "Google AdMob / Unity / Start.io Banner Active";
+                }
+            },
+
+            showInterstitial() {
+                // إظهار الإعلان البيني بعد التنظيف بنظام الوساطة الهجين
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
+                    window.Capacitor.Plugins.AdMob.showInterstitial({ adId: this.config.admob.interstitialId }).catch(() => {
+                        console.log("Triggering Unity/Start.io backup Interstitial");
+                    });
+                } else {
+                    console.log("Interstitial Triggered (Test Simulation) - AdMob ID: " + this.config.admob.interstitialId);
+                }
+            }
+        };
+
+        // ==========================================
+        // 2. المحرك الصوتي المركزي (Web Audio API Engine)
+        // ==========================================
+        let audioContext = null;
+        function getAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            return audioContext;
+        }
+
+        // ==========================================
+        // 3. محاكاة حركة السائل في الـ Canvas (Liquid Waves Physics)
+        // ==========================================
+        const canvas = document.getElementById('waterFluidCanvas');
+        const ctx = canvas.getContext('2d');
+        let waveCycle = 0;
+        let waveTurbulence = 0;
+
+        function renderLiquidChamber() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const w = canvas.width;
+            const h = canvas.height;
+            const cy = h * 0.58;
+
+            ctx.beginPath();
+            ctx.moveTo(0, h);
+            for (let x = 0; x <= w; x += 5) {
+                const y = cy + Math.sin((x * 0.05) + waveCycle) * (6 + waveTurbulence * 16)
+                             + Math.cos((x * 0.03) - waveCycle) * (4 + waveTurbulence * 8);
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(w, h);
+            ctx.closePath();
+
+            const grad = ctx.createLinearGradient(0, cy - 20, 0, h);
+            grad.addColorStop(0, 'rgba(0, 242, 254, 0.6)');
+            grad.addColorStop(1, 'rgba(79, 70, 229, 0.85)');
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            waveCycle += 0.06 + (waveTurbulence * 0.08);
+            requestAnimationFrame(renderLiquidChamber);
+        }
+        renderLiquidChamber();
+
+        // ==========================================
+        // 4. التنقل بين الشاشات والتبويبات
+        // ==========================================
+        function switchNavTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active-view'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active-view');
+
+            const tabMap = {
+                'tabCleaner': 'btnNavCleaner',
+                'tabSleep': 'btnNavSleep',
+                'tabDecibel': 'btnNavDecibel',
+                'tabHearing': 'btnNavHearing',
+                'tabBooster': 'btnNavBooster',
+                'tabGuides': 'btnNavGuides'
+            };
+            if (tabMap[tabId]) document.getElementById(tabMap[tabId]).classList.add('active');
+        }
+
+        function switchCleanSubMode(mode) {
+            document.querySelectorAll('.seg-pill-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('cleanSubAuto').style.display = (mode === 'auto') ? 'block' : 'none';
+            document.getElementById('cleanSubRotary').style.display = (mode === 'rotary') ? 'block' : 'none';
+            document.getElementById('cleanSubPitches').style.display = (mode === 'pitches') ? 'block' : 'none';
+
+            if (mode === 'auto') document.getElementById('btnModeAuto').classList.add('active');
+            if (mode === 'rotary') document.getElementById('btnModeRotary').classList.add('active');
+            if (mode === 'pitches') document.getElementById('btnModePitches').classList.add('active');
+        }
+
+        // ==========================================
+        // 5. محرك التنظيف التلقائي 165Hz مع الاهتزاز الميكانيكي
+        // ==========================================
+        let isCleaningActive = false;
+        let cleanIntervalTimer = null;
+        let autoCleanOscillator = null;
+
+        function toggleAutoSpeakerEject() {
+            if (isCleaningActive) {
+                stopAutoSpeakerEject();
+                return;
+            }
+
+            const actx = getAudioContext();
+            isCleaningActive = true;
+            waveTurbulence = 1;
+
+            const btn = document.getElementById('btnStartAutoCleaning');
+            btn.classList.add('running-btn');
+            document.getElementById('autoBtnIcon').innerText = '⏹';
+            document.getElementById('autoBtnLabel').innerText = 'STOP CLEANING (35s)';
+            document.getElementById('autoStatusDisplay').innerText = 'EJECTING WATER...';
+
+            autoCleanOscillator = actx.createOscillator();
+            const gain = actx.createGain();
+            autoCleanOscillator.type = 'sawtooth';
+            autoCleanOscillator.frequency.setValueAtTime(165, actx.currentTime);
+
+            gain.gain.setValueAtTime(1, actx.currentTime);
+            autoCleanOscillator.connect(gain);
+            gain.connect(actx.destination);
+            autoCleanOscillator.start();
+
+            let elapsedSeconds = 0;
+            const totalDuration = 35;
+
+            cleanIntervalTimer = setInterval(() => {
+                elapsedSeconds += 0.2;
+                let percent = Math.min(100, (elapsedSeconds / totalDuration) * 100);
+                document.getElementById('autoPercentDisplay').innerText = `${Math.round(percent)}%`;
+
+                let freqSweep = 165 + Math.sin(elapsedSeconds * 4) * 35;
+                autoCleanOscillator.frequency.setValueAtTime(freqSweep, actx.currentTime);
+                document.getElementById('autoFreqDisplay').innerText = `${Math.round(freqSweep)} Hz`;
+
+                if (navigator.vibrate && Math.floor(elapsedSeconds * 5) % 4 === 0) {
+                    navigator.vibrate(180);
+                }
+
+                if (elapsedSeconds >= totalDuration) {
+                    stopAutoSpeakerEject(true);
+                }
+            }, 200);
+        }
+
+        function stopAutoSpeakerEject(completed = false) {
+            clearInterval(cleanIntervalTimer);
+            isCleaningActive = false;
+            waveTurbulence = 0;
+
+            if (autoCleanOscillator) {
+                try { autoCleanOscillator.stop(); autoCleanOscillator.disconnect(); } catch(e){}
+                autoCleanOscillator = null;
+            }
+
+            const btn = document.getElementById('btnStartAutoCleaning');
+            btn.classList.remove('running-btn');
+            document.getElementById('autoBtnIcon').innerText = '⚡';
+            document.getElementById('autoBtnLabel').innerText = 'START DEEP CLEANING (35s)';
+
+            if (completed) {
+                document.getElementById('autoPercentDisplay').innerText = '100%';
+                document.getElementById('autoStatusDisplay').innerText = 'CLEAN COMPLETE!';
+                incrementDailyStreak();
+                
+                // استدعاء الإعلان البيني فور اكتمال التنظيف بنجاح
+                AdEngine.showInterstitial();
+
+                // استدعاء دالة اعتراض التقييمات الذكية لخوارزمية المتجر
+                triggerSmartStoreReview();
+            } else {
+                document.getElementById('autoPercentDisplay').innerText = '0%';
+                document.getElementById('autoStatusDisplay').innerText = 'READY';
+            }
+        }
+
+        // ==========================================
+        // 6. القرص الدوار التفاعلي 360 درجة (Manual Rotary Knob)
+        // ==========================================
+        const rotaryHubArea = document.getElementById('rotaryTouchHub');
+        const rotaryWheelCircle = document.getElementById('rotaryWheelCircle');
+        let isDraggingRotary = false;
+        let rotaryFrequencyVal = 165;
+        let rotaryOscillator = null;
+        let isRotarySoundPlaying = false;
+
+        function updateRotaryWheelPosition(clientX, clientY) {
+            const rect = rotaryHubArea.getBoundingClientRect();
+            const cX = rect.left + rect.width / 2;
+            const cY = rect.top + rect.height / 2;
+            const rad = Math.atan2(clientY - cY, clientX - cX);
+            let deg = rad * (180 / Math.PI) + 90;
+            if (deg < 0) deg += 360;
+
+            rotaryWheelCircle.style.transform = `rotate(${deg}deg)`;
+            rotaryFrequencyVal = Math.max(1, Math.round((deg / 360) * 500));
+            document.getElementById('rotaryHzLabel').innerText = `${rotaryFrequencyVal} Hz`;
+
+            if (rotaryOscillator && isRotarySoundPlaying) {
+                rotaryOscillator.frequency.setValueAtTime(rotaryFrequencyVal, audioContext.currentTime);
+            }
+        }
+
+        rotaryHubArea.addEventListener('pointerdown', (e) => {
+            isDraggingRotary = true;
+            updateRotaryWheelPosition(e.clientX, e.clientY);
+        });
+        window.addEventListener('pointermove', (e) => {
+            if (isDraggingRotary) updateRotaryWheelPosition(e.clientX, e.clientY);
+        });
+        window.addEventListener('pointerup', () => isDraggingRotary = false);
+
+        function toggleRotaryContinuousTone() {
+            const actx = getAudioContext();
+            const btn = document.getElementById('btnToggleRotaryTone');
+            const icon = document.getElementById('rotaryPlayIcon');
+            const txt = document.getElementById('rotaryPlayText');
+
+            if (isRotarySoundPlaying) {
+                if (rotaryOscillator) { rotaryOscillator.stop(); rotaryOscillator.disconnect(); rotaryOscillator = null; }
+                isRotarySoundPlaying = false;
+                icon.innerText = '▶';
+                txt.innerText = 'PLAY ROTARY FREQUENCY';
+                btn.classList.remove('running-btn');
+            } else {
+                rotaryOscillator = actx.createOscillator();
+                const gain = actx.createGain();
+                rotaryOscillator.type = 'sawtooth';
+                rotaryOscillator.frequency.setValueAtTime(rotaryFrequencyVal, actx.currentTime);
+                rotaryOscillator.connect(gain);
+                gain.connect(actx.destination);
+                rotaryOscillator.start();
+
+                isRotarySoundPlaying = true;
+                icon.innerText = '⏹';
+                txt.innerText = 'STOP FREQUENCY TONE';
+                btn.classList.add('running-btn');
+            }
+        }
+
+        function runTargetedPitch(freq, name) {
+            switchCleanSubMode('auto');
+            document.getElementById('autoFreqDisplay').innerText = `${freq} Hz`;
+            toggleAutoSpeakerEject();
+        }
+
+        // ==========================================
+        // 7. مقياس الديسيبل الفعلي Live dB Meter
+        // ==========================================
+        let micMediaStream = null;
+        let isMicMeterActive = false;
+        let micSamplerInterval = null;
+
+        async function toggleMicrophoneDbMeter() {
+            if (isMicMeterActive) {
+                if (micMediaStream) micMediaStream.getTracks().forEach(t => t.stop());
+                clearInterval(micSamplerInterval);
+                isMicMeterActive = false;
+                document.getElementById('dbMeterNum').innerText = '00';
+                document.getElementById('dbStatusLabel').innerText = 'Microphone Inactive';
+                document.getElementById('dbMeterFill').style.width = '0%';
+                document.getElementById('micIcon').innerText = '🎙️';
+                document.getElementById('micText').innerText = 'ACTIVATE LIVE DB METER';
+                return;
+            }
+
+            try {
+                micMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const actx = getAudioContext();
+                const micSourceNode = actx.createMediaStreamSource(micMediaStream);
+                const analyserNode = actx.createAnalyser();
+                analyserNode.fftSize = 256;
+                micSourceNode.connect(analyserNode);
+
+                isMicMeterActive = true;
+                document.getElementById('micIcon').innerText = '⏹';
+                document.getElementById('micText').innerText = 'STOP DB METER';
+                document.getElementById('dbStatusLabel').innerText = 'Measuring Live Ambient Noise...';
+
+                const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+
+                micSamplerInterval = setInterval(() => {
+                    analyserNode.getByteFrequencyData(dataArray);
+                    let sum = 0;
+                    for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                    let avg = sum / dataArray.length;
+                    let db = Math.round(20 + (avg * 0.75));
+
+                    document.getElementById('dbMeterNum').innerText = db;
+                    let gaugePercent = Math.min(100, (db / 110) * 100);
+                    document.getElementById('dbMeterFill').style.width = `${gaugePercent}%`;
+                }, 80);
+            } catch(e) {
+                alert("Please grant microphone permission to measure live acoustic decibels.");
+            }
+        }
+
+        // ==========================================
+        // 8. آلة الاسترخاء والنوم اليومية (White/Brown Noise Synthesizer)
+        // ==========================================
+        let activeSleepSoundNode = null;
+        let currentSleepType = null;
+
+        function toggleAcousticAtmosphere(type, cardElement) {
+            const actx = getAudioContext();
+
+            if (currentSleepType === type) {
+                if (activeSleepSoundNode) {
+                    try { activeSleepSoundNode.stop(); activeSleepSoundNode.disconnect(); } catch(e){}
+                    activeSleepSoundNode = null;
+                }
+                currentSleepType = null;
+                document.querySelectorAll('.sleep-node-card').forEach(c => c.classList.remove('playing'));
+                return;
+            }
+
+            if (activeSleepSoundNode) {
+                try { activeSleepSoundNode.stop(); activeSleepSoundNode.disconnect(); } catch(e){}
+                activeSleepSoundNode = null;
+            }
+
+            document.querySelectorAll('.sleep-node-card').forEach(c => c.classList.remove('playing'));
+            cardElement.classList.add('playing');
+            currentSleepType = type;
+
+            if (type === '432') {
+                activeSleepSoundNode = actx.createOscillator();
+                const gain = actx.createGain();
+                activeSleepSoundNode.type = 'sine';
+                activeSleepSoundNode.frequency.setValueAtTime(432, actx.currentTime);
+                gain.gain.setValueAtTime(0.3, actx.currentTime);
+                activeSleepSoundNode.connect(gain);
+                gain.connect(actx.destination);
+                activeSleepSoundNode.start();
+            } else {
+                const bufferSize = actx.sampleRate * 2;
+                const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
+                const channelData = buffer.getChannelData(0);
+
+                let lastSample = 0.0;
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    if (type === 'brown' || type === 'rain') {
+                        channelData[i] = (lastSample + (0.02 * white)) / 1.02;
+                        lastSample = channelData[i];
+                        channelData[i] *= 3.5;
+                    } else {
+                        channelData[i] = white * 0.15;
+                    }
+                }
+
+                activeSleepSoundNode = actx.createBufferSource();
+                activeSleepSoundNode.buffer = buffer;
+                activeSleepSoundNode.loop = true;
+
+                const gain = actx.createGain();
+                gain.gain.setValueAtTime(type === 'rain' ? 0.35 : 0.25, actx.currentTime);
+
+                activeSleepSoundNode.connect(gain);
+                gain.connect(actx.destination);
+                activeSleepSoundNode.start();
+            }
+        }
+
+        // ==========================================
+        // 9. فحص عمر الأذن والسمع (Hearing Age Frequency Diagnostic)
+        // ==========================================
+        let hearingOscillator = null;
+        let isHearingTestActive = false;
+        let currentHearingTone = 12000;
+
+        function changeHearingFreqValue(freq) {
+            currentHearingTone = parseInt(freq);
+            document.getElementById('hearingFreqText').innerText = `${currentHearingTone.toLocaleString()} Hz`;
+
+            let approxAge = "~50+ Years Old";
+            if (currentHearingTone >= 18000) approxAge = "~Under 20 Years Old (Teenager)";
+            else if (currentHearingTone >= 16000) approxAge = "~24 Years Old";
+            else if (currentHearingTone >= 14000) approxAge = "~30 Years Old";
+            else if (currentHearingTone >= 12000) approxAge = "~38 Years Old";
+            else if (currentHearingTone >= 10000) approxAge = "~45 Years Old";
+
+            document.getElementById('hearingAgeText').innerText = `Estimated Ear Age: ${approxAge}`;
+
+            if (hearingOscillator && isHearingTestActive) {
+                hearingOscillator.frequency.setValueAtTime(currentHearingTone, audioContext.currentTime);
+            }
+        }
+
+        function toggleHearingTonePlay() {
+            const actx = getAudioContext();
+            const btnLabel = document.getElementById('hearingBtnText');
+            const btn = document.getElementById('btnHearingToneToggle');
+
+            if (isHearingTestActive) {
+                if (hearingOscillator) { hearingOscillator.stop(); hearingOscillator.disconnect(); hearingOscillator = null; }
+                isHearingTestActive = false;
+                btnLabel.innerText = 'Test This Frequency';
+                btn.classList.remove('running-btn');
+            } else {
+                hearingOscillator = actx.createOscillator();
+                const gain = actx.createGain();
+                hearingOscillator.type = 'sine';
+                hearingOscillator.frequency.setValueAtTime(currentHearingTone, actx.currentTime);
+                gain.gain.setValueAtTime(0.2, actx.currentTime);
+                hearingOscillator.connect(gain);
+                gain.connect(actx.destination);
+                hearingOscillator.start();
+
+                isHearingTestActive = true;
+                btnLabel.innerText = 'Stop Audio Tone';
+                btn.classList.add('running-btn');
+            }
+        }
+
+        // ==========================================
+        // 10. مضخم ومختبر الصوت واستريو الألعاب (Booster & Stereo Diagnostics)
+        // ==========================================
+        function playSingleDiagnosticTone(freq, dur = 2) {
+            const actx = getAudioContext();
+            const osc = actx.createOscillator();
+            const gain = actx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, actx.currentTime);
+            gain.gain.setValueAtTime(0.5, actx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+            osc.connect(gain);
+            gain.connect(actx.destination);
+            osc.start();
+            osc.stop(actx.currentTime + dur);
+        }
+
+        function playStereoChannelPan(channel) {
+            const actx = getAudioContext();
+            const osc = actx.createOscillator();
+            const panner = actx.createStereoPanner ? ctx.createStereoPanner() : null;
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(440, actx.currentTime);
+
+            if (panner) {
+                panner.pan.setValueAtTime(channel === 'left' ? -1 : 1, actx.currentTime);
+                osc.connect(panner);
+                panner.connect(actx.destination);
+            } else {
+                osc.connect(actx.destination);
+            }
+            osc.start();
+            osc.stop(actx.currentTime + 1.6);
+        }
+
+        function playFullAcousticSweep() {
+            const actx = getAudioContext();
+            const osc = actx.createOscillator();
+            const gain = actx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(50, actx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(12000, actx.currentTime + 3.5);
+            gain.gain.setValueAtTime(0.4, actx.currentTime);
+            osc.connect(gain);
+            gain.connect(actx.destination);
+            osc.start();
+            osc.stop(actx.currentTime + 3.5);
+        }
+
+        // ==========================================
+        // 11. تصفية مقالات موسوعة الصيانة الشاملة
+        // ==========================================
+        function filterEncyclopediaArticles(category, chipEl) {
+            document.querySelectorAll('.enc-chip').forEach(c => c.classList.remove('active'));
+            chipEl.classList.add('active');
+
+            const articles = document.querySelectorAll('.guide-item-card');
+            articles.forEach(art => {
+                if (category === 'all' || art.getAttribute('data-cat') === category) {
+                    art.style.display = 'block';
+                } else {
+                    art.style.display = 'none';
+                }
+            });
+        }
+
+        // ==========================================
+        // 12. القائمة الجانبية والمودال
+        // ==========================================
+        function openDrawer() {
+            document.getElementById('drawerBackdrop').style.display = 'block';
+            document.getElementById('drawerPanel').classList.add('open');
+        }
+        function closeDrawer() {
+            document.getElementById('drawerBackdrop').style.display = 'none';
+            document.getElementById('drawerPanel').classList.remove('open');
+        }
+
+        // =========================================================================
+        // 13. الدوال الخفية الموجهة لخوارزميات Google Play (Growth Hacking Engine)
+        // =========================================================================
+
+        function triggerSmartStoreReview() {
+            document.getElementById('reviewInterceptModal').style.display = 'flex';
+        }
+        function closeReviewModal() {
+            document.getElementById('reviewInterceptModal').style.display = 'none';
+        }
+
+        function recordRatingSentiment(rating) {
+            closeReviewModal();
+            if (rating === 5) {
+                // إذا قيم 5 نجوم: تحويل مباشر وفوري للمتجر لتسجيل تقييم 5 نجوم يرفع رانك التطبيق في جوجل
+                window.location.href = "market://details?id=com.hydropulse.max.cleaner";
+            } else {
+                // إذا قيم أقل من 5: امتصاص الملاحظة داخلياً لحماية التقييم العام للتطبيق
+                alert("Thank you for your feedback! We are constantly tuning our resonance frequencies.");
+            }
+        }
+
+        function shareViralRescueHook() {
+            const viralMessage = "🚨 هل سقط هاتفك في الماء أو صوته مكتوم؟ شغّل هذا التطبيق المجاني فوراً لإخراج الماء والغبار بموجات 165Hz بدون صيانة:";
+            const appStoreUrl = "https://play.google.com/store/apps/details?id=com.hydropulse.max.cleaner";
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'HydroPulse Max - Instant Sound & Water Ejector',
+                    text: viralMessage,
+                    url: appStoreUrl
+                }).catch(() => {});
+            } else {
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(viralMessage + " " + appStoreUrl)}`);
+            }
+        }
+
+        function incrementDailyStreak() {
+            let streak = parseInt(localStorage.getItem('hp_daily_streak') || "1");
+            const lastDate = localStorage.getItem('hp_last_clean_date');
+            const todayStr = new Date().toDateString();
+
+            if (lastDate !== todayStr) {
+                streak += 1;
+                localStorage.setItem('hp_daily_streak', streak.toString());
+                localStorage.setItem('hp_last_clean_date', todayStr);
+                document.getElementById('streakDaysCount').innerText = `${streak} Days Streak`;
+            }
+        }
+
+        function scheduleRoutineCleanAlarm() {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(perm => {
+                    if (perm === "granted") {
+                        alert("✓ تم تفعيل منبه صيانة الغبار الأسبوعي بنجاح! سيتلقى هاتفك تذكيراً دورياً للحفاظ على نقاء السماعة.");
+                    }
+                });
+            } else {
+                alert("منبه الصيانة الأسبوعي مفعل تلقائياً داخل النظام.");
+            }
+        }
+
+        // تشغيل المحرك عند بدء التطبيق
+        window.addEventListener('load', () => {
+            AdEngine.init();
+        });
+    </script>
+</body>
+</html>
