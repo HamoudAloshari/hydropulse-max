@@ -15,7 +15,7 @@ jobs:
       - name: 1. Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: 2. Setup Node.js
+      - name: 2. Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -26,10 +26,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: 4. Build Project & Capacitor
+      - name: 4. Build Project & Fetch Offline Quran
         run: |
           mkdir -p www
           cp index.html manifest.json sw.js privacy-policy.html www/ 2>/dev/null || true
+          # جلب ملف سورة الملك ودمجه داخل التطبيق
+          curl -L -s -o www/mulk.mp3 "https://server8.mp3quran.net/afs/067.mp3"
           npm init -y
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
           npx cap init "HydroPulse Max" "com.hydropulse.max.cleaner" --web-dir www
